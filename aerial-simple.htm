@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Google Maps JavaScript API Example: Simple Aerials</title>
+    <script src="//maps.google.com?file=api&amp;v=2.x&amp;key=AIzaSyD4iE2xVSpkLLOXoyqT-RuPwURN3ddScAI" type="text/javascript"></script>
+    <script type="text/javascript">
+    function initialize() {
+      var map = new GMap2(document.getElementById("map_canvas"));
+      map.setCenter(new GLatLng(37.339085, -121.8914807), 18);
+
+      // Select a map type which supports obliques
+       map.setMapType(G_HYBRID_MAP);
+      //map.setMapType(G_NORMAL_MAP);
+      map.setUIToDefault();
+
+      // Enable the additional map types within
+      //the map type collection
+      map.enableRotation();
+    }
+    </script>
+  </head>
+
+  <body onload="initialize()" onunload="GUnload()">
+    <div id="map_canvas" style="width: 640px; height: 480px"></div>
+  </body>
+</html>

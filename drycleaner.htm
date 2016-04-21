@@ -1,0 +1,394 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<META name="robots" content="index,follow">
+<META name="keywords" content="dry,cleaner,cleaning,service,green,coquitlam,tri-city,port moddy,drycleanrs">
+<META name="description" content="drycleanrs、dry cleaner store">
+<title>Eagle Square Dry Cleaners</title>
+
+ 
+ <link href="webs/css/ui-lightness/jquery-ui-1.8.20.custom.css" type="text/css"  rel="stylesheet">
+ <link href="webs/css/frameStyle.css" type="text/css"  rel="stylesheet">
+
+ 
+ <script src="webs/javascript/jquery-1.7.2.min.js" type="text/javascript"></script>
+ <script src="webs/javascript/jquery-ui-1.8.20.custom.min.js" type="text/javascript"></script>
+ <script src="javascript/common.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+ var selectedMenu   = "SendRequest";
+ var ControllerName = "controller";
+ var EventName      = "action";
+ var ajaxPostName   = "ajaxRequest";
+ var selectedAction = null;
+ var previousAction = null;
+ 
+
+$(function() {
+	$('#centermenuTable td').click(function(){
+		var selId = jQuery.trim($(this).attr('id'));
+		var curId = jQuery.trim($('#' + selectedMenu).val());
+
+		if (selId != curId && selId != '') {
+			//alert ('selId: ' + selId +' , curId:'+curId + ', selectedMenu:'+selectedMenu);
+			$('#'+selectedMenu).val(selId);
+			
+			window.location.href=('index.php?'+ ControllerName +'='+selId);
+		}
+		
+	});
+
+	$('#leftsideridtab td').click(function(){
+		var selId = jQuery.trim($(this).attr('id'));
+		var curId = jQuery.trim($('#'+ EventName).val());
+		var curCmenuId = jQuery.trim($('#'+selectedMenu).val());
+		var doSubmit = false;
+		
+		if ($("#" + EventName).length == 0) {
+			$('<input type="hidden" id ="'+EventName+'" name ="'+EventName+'">').appendTo('#centermenuid');
+		}
+		
+		if (selId != curId && selId != '') {
+			previousAction = curId;
+			selectedAction = selId;
+			
+			$('#' + EventName).val(selId);
+			//location.href=('index.php?' + EventName + '=' + selId +'&' + ControllerName + '=' + selectedMenu);
+			
+			var params = new Array(new Array(EventName,selId),
+					               new Array(ControllerName,selectedMenu),
+					               new Array(ajaxPostName, '1')
+					          );
+			
+			submitByAjax(showPageContents,params);
+		}
+		
+	});
+	
+	// submit
+	$('#doSubmit').click(function(){
+		
+		$('#websubmitfrm').submit();
+		
+	});
+	
+	if (! isEmpty($('#pricelistpopupwind').attr('id'))) {
+		$('#pricelistpopupwind').dialog({ 
+			title:"Order Amount Evaluator",
+			autoOpen: false,
+			modal: false,
+			maxHeight:600,
+			maxWidth:400,
+			height: 550,
+			width:400,
+			position: ['right','top'],
+			//show: "slide" ,
+			buttons: { "CLOSE": function() { 
+						
+						$(this).dialog("close"); 
+					 	} 
+					 }
+		});
+	}
+	
+	$('#PopupPriceListId').click(function() {
+		$('#pricelistpopupwind').dialog( "open" );
+		
+		//var position = $('#pricelistpopupwind').position();
+		
+		$('#showtotalamount').css("display","block");
+	});
+	
+	$('#pricelistpopupwind input[name="inputPicecsField"]').change(function() {
+		var selectedId = $(this).attr('id');
+		var ItemPieces = jQuery.trim($(this).val());
+		var ItemPrice  = jQuery.trim($('#pricelistpopupwind input[type="hidden"][name="' + selectedId+'"]').attr('value'));
+		var ItemAmount = '';
+		var amountfieldId ;
+		
+		if (selectedId.length > 2) {
+			if (ItemPrice !='' && ItemPieces != '') {
+				ItemAmount = Math.round(parseFloat(ItemPieces) * parseFloat(ItemPrice) *100)/100 ;
+			}
+			amountfieldId = 'amountfieldname' + selectedId.substr(selectedId.length - 2) ;
+			$('#pricelistpopupwind #' + amountfieldId).text(ItemAmount);
+			
+			$('#SummaryOrderAmount').text(getTotalAmount());
+		}
+	});
+	
+	$('#pricelistpopupwind').scroll(function(){
+	    $("#showtotalamount")
+	    .stop()
+	    .animate({"marginTop": ($(this).scrollTop()) + "px"}, "slow" );
+	});
+	
+})
+
+function getTotalAmount() {
+	var retValue =0;
+	var textVar  ='';
+
+	$('#PriceListId tr>td:nth-child(5)').each(function() {
+		textVar = jQuery.trim($(this).text());
+		if ( textVar.length>0) {
+			retValue += parseFloat(textVar);
+		}
+	});
+	if (retValue > 0 ) {
+	  textVar = '$ '+ Math.round(retValue * 100)/100;
+	} else {
+		textVar ='';
+	}
+	return textVar;
+}
+
+function getOrderListAndTotalAmount(setbyHtml) {
+	var retValue =0;
+	var retSum   =0;
+	var textVar  ='';
+	var retText  ='';
+	var parentObj;
+	
+	if (jQuery.trim(setbyHtml).length) {
+		setbyHtml = false;
+	}
+
+	$('#PriceListId tr>td:nth-child(5)').each(function() {
+		textVar = jQuery.trim($(this).text());
+		if ( textVar.length>0) {
+			retText += '<tr>';
+			retValue = parseFloat(textVar);
+			if (retValue > 0) {
+				retSum += retValue;
+				parentObj = $(this).parent();
+				/*
+				textVar = parentObj.('td:nth-child(1)').text();
+				retText += '<td>' + parentObj.('td:nth-child(1)').text() + '<td>';
+				retText += '<td>' + parentObj.('td:nth-child(2)').text() + '<td>';
+				retText += '<td>' + parentObj.('td:nth-child(3)').text() + '<td>';
+				retText += '<td>' + parentObj.('td:nth-child(4) input').val() + '<td>';
+				retText += '<td>' + parentObj.('td:nth-child(5)').text() + '<td>';
+				*/
+			}
+			retText += '</tr>';
+		}
+	});
+	if (retValue > 0 ) {
+	  textVar = '$ '+ Math.round(retValue * 100)/100;
+	} else {
+		textVar ='';
+	}
+	return textVar;
+}
+
+function showPageContents(Data, textStatus, jqXHR) {
+	//alert(Data);
+	
+	//var jsonData = eval('(' + Data + ')');
+	//var jsonData = jQuery.parseJSON(Data);
+	if (previousAction !=null && selectedAction !=null && Data.length>20) {
+		$('#BodyContens').html(Data);
+		$('#'+previousAction).css('color',"white");
+		$('#'+selectedAction).css('color',"red");
+
+		var cMenuid = $('#controller').val();
+		
+		var cMenuName = $('#'+ cMenuid).text();
+		
+		var actionName = $('#'+ selectedAction).text();
+		
+		varHtml = '<font size="4" color="OrangeRed">' + cMenuName+ ' for <font color="Darkbule">' + actionName +'</font></font>';
+		$('#navActionName').html(varHtml);
+	}
+	
+	
+	//$('#BodyContens').html(jsonData);
+	//alert(jsonData);
+	/*
+	$.each(jsonData, function(key, item){
+		alert(' key' +key+'  ,value:'+item);
+		
+	});
+	*/
+}
+
+
+
+</script>
+</head>
+<body>
+<EMBED style="LEFT: 150px; WIDTH: 600px; POSITION: absolute; TOP: 10px; HEIGHT: 500px" align=right src=http://hlm.nease.net/swf/red/liu.swf width=500 height=500 type=application/octet-stream wmode="transparent" quality="high" ;;></EMBED><EMBED style="LEFT: 150px; WIDTH: 600px; POSITION: absolute; TOP: 20px; HEIGHT: 500px" align=right src=http://hlm.nease.net/swf/red/cloud.swf width=500 height=500 type=application/octet-stream wmode="transparent" quality="high" ;;></EMBED>
+<div id="pageheadid" style="background: url(webs/images/hero_earth.jpg) no-repeat; background-size:100% 100%;background-position: 90% 30%" >
+<table height="200"  >
+<tr><td height="30px">
+<div id="logoImage">
+<img src="webs/images/EagleDrycleanersLogo_s.jpg" alt='Eagle Square Dry Cleaners' height="30" border="0"/>
+<font color="red">Eagle Square Drycleabers</font>
+<span>Call Us:604-469-7817</span>
+<span>&nbsp;&nbsp;<a href='mailto:info@eagledrycleaners.com'>Email Us</a></span>
+</div>
+</td></tr>
+<tr><td>Over 30 years dry cleaning experience.</td></tr>
+<tr><td>Professional and qualified staff.</td></tr>
+<tr><td>Eagle Square Dry Cleabers provid best sevice for you.</td></tr>
+<tr><td>Free Pick Up & Delivery Service.</td></tr>
+<tr><td>One Day Service and Receive Contract Request.</td></tr>
+</table>
+</div>
+<form method="POST" id="websubmitfrm" action="index.php">
+<div id="centermenuid">
+<input type="hidden" name="controller" id="controller" value="SendRequest">
+<input type="hidden" name="action" id="action" value="pickupRequest">
+<table id="centermenuTable">
+<tr>
+ 
+ <td id='SendRequest'><font>Send Request</font></td>
+ <td id='ServiceCategory'>Service Category</td>
+  <td id='PriceBoard'>Price Board</td>
+  <td id='ConfirmRequest'>Your Garments</td>
+  <td id='AboutUs'>About</td>
+ </tr>
+</table>
+</div>    
+    <div id = "pagebodyid">
+<table id="outsideFrameId">
+<tr>
+<td id='leftsiderid' width="20%" valign="top">
+<table id="leftsideridtab"><tr><td id="pickupRequest" class="button0" style="color:red;">Pick up</td></tr><tr><td id="delivery" class="button1" >Delivery</td></tr><tr><td id="contract" class="button2" >Contract</td></tr><tr><td id="feedback" class="button3" >Feed Back</td></tr></table>
+</td>
+<td id='bodycontentid' valign="top">
+<div id="inputOrderButton"><img src="webs/images/orderflash.gif" /><span>Input your Order</span></div>
+<fieldset style="text-align:left;border: 2px solid LawnGreen;height:100%;width:96%;">
+<legend id="navActionName" style="margin-left:15px;"><font size='4' color='OrangeRed'>Send Request for <font color='Darkbule'>Pick up</font></font></legend>
+<div id='BodyContens' >
+    <div id='inputFieldsArea'>
+		<div id='topicTitleId' style='width:100%;background: url(webs/images/background_title_green.png) no-repeat; background-size:100% 100%;background-position:top center;' >
+			<table id='topicTitleTableId' style='width:100%;vertical-align:middle;padding:10px;' >
+			<tr><td align='left'><font size='3'><b>Free Pick Up will save your time!</b></font></td></tr>
+			<tr><td align='left' rowspan='4'>&nbsp;&nbsp; When your orders amount of before tax over minimum amount 
+			 (Tri-City area:$20, Bunaby/New Westminster/Pitt Meadows:$30, Vancouver/Surrey/Maple Right:$40). 
+			  Orders under the minimum are subject to a fee (Tri-City area:$5.00, otherwise:$10.00). For delivery pay cash only.
+			  <a href='#' id='PopupPriceListId' style="color:red;">evaluate your order</a>
+			</td></tr>
+			<tr><td align='left'>&nbsp;</td></tr>
+			<tr><td align='left'>&nbsp;</td></tr>
+			<tr><td align='left'>&nbsp;</td></tr>
+			</table>
+		</div>
+		<div id = 'inputAreaId' style='padding-top:20px;' >
+			<table id = 'inputAreaTableId'>
+				<tr><td align='right'><font color='red'>*</font>&nbsp;&nbsp;First Name:</td><td><input type='text' size='24' name='firstname'></td><td align='right'><font color='red'>*</font>&nbsp;&nbsp;List Name:</td><td><input type='text' size='24' name='firstname'/></td></tr>
+				<tr><td align='right'><font color='red'>*</font>&nbsp;&nbsp;Contact Phone:</td><td ><input type='text' size='18' name='PhoneNumber1'><td align='right'>Second Phone:</td><td ><input type='text' size='18' name='PhoneNumber2'/></td></tr>
+				<tr><td align='right'><font color='red'>*</font>&nbsp;&nbsp;Pickup Address:</td><td><input type='text' size='40' name='PickUpAddress'></td><td align='right'>Unit/Suite/Apt:</td><td><input type='text' size='8' name='postCode'/></td></tr>
+				<tr><td align='right'><font color='red'>*</font>&nbsp;&nbsp;City:</td><td><select name='selectedCity' id='selectedCity'><option value=0 selected >Select...</option><option value=1 >Coquitlam</option><option value=2 >Port Moody</option><option value=3 >Port Coquitlam</option><option value=4 >Burnaby</option><option value=5 >New Westminster</option><option value=6 >North Surrey</option><option value=7 >Vancouver</option><option value=8 >Pitt Meadows</option><option value=9 >Maple Ridge</option></select></td><td align='right'>Postcode:</td><td><input type='text' size='8' name='postcode'></td></tr>
+				<tr><td align='right'><font color='red'>*</font>&nbsp;&nbsp;Contact email:</td><td ><input type='text' size='40' name='emailAddress'><td colspan="2" align='left'>British Columbia of Canada</td></tr>
+				<tr><td align='right' valign='top'>Comment:</td><td colspan='3'><textarea cols='60' rows='5' name='comment'></textarea></td></tr>
+			</table>
+		</div>
+	</div>
+</div>
+ <div id="forSubmitArea" align="center">
+		<input type ="button" name="doSubmit" id ="doSubmit" value ="Submit">
+		</div>
+		
+
+</fieldset>
+</td>
+</tr>
+</table>
+</div>
+</form>
+<div id='pricelistpopupwind'>
+<table id="PriceListId"><tr><th  width="200" >Garment Name</th><th >Price</th><th >Unit</th><th >Pieces</th><th >Amount</th></tr><tr><td>Shirt (regular laundered)</td><td>3</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname01" size="4" >
+			             <input type="hidden" name="piecesfieldname01" value="3" >
+			             </td><td id="amountfieldname01">&nbsp;</td></tr><tr><td>Shirt (silk, linen, hand pressed, heavy, regular with cuff, dry cleaned,folded)</td><td>4.5</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname02" size="4" >
+			             <input type="hidden" name="piecesfieldname02" value="4.5" >
+			             </td><td id="amountfieldname02">&nbsp;</td></tr><tr><td>T Shirt, Golf Shirt</td><td>4.5</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname03" size="4" >
+			             <input type="hidden" name="piecesfieldname03" value="4.5" >
+			             </td><td id="amountfieldname03">&nbsp;</td></tr><tr><td>Rugby,Tuxedo</td><td>6.5</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname04" size="4" >
+			             <input type="hidden" name="piecesfieldname04" value="6.5" >
+			             </td><td id="amountfieldname04">&nbsp;</td></tr><tr><td>Pant (without lining long or short)</td><td>7.5</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname05" size="4" >
+			             <input type="hidden" name="piecesfieldname05" value="7.5" >
+			             </td><td id="amountfieldname05">&nbsp;</td></tr><tr><td>Pant (with lining, heavy, corduroy,too hairy)</td><td>8.5</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname06" size="4" >
+			             <input type="hidden" name="piecesfieldname06" value="8.5" >
+			             </td><td id="amountfieldname06">&nbsp;</td></tr><tr><td>Suit 2pc (jacket with pant or skirt)</td><td>19</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname07" size="4" >
+			             <input type="hidden" name="piecesfieldname07" value="19" >
+			             </td><td id="amountfieldname07">&nbsp;</td></tr><tr><td>3pc (jacket with pant and vest)</td><td>25</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname08" size="4" >
+			             <input type="hidden" name="piecesfieldname08" value="25" >
+			             </td><td id="amountfieldname08">&nbsp;</td></tr><tr><td>Sweater</td><td>8.5</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname09" size="4" >
+			             <input type="hidden" name="piecesfieldname09" value="8.5" >
+			             </td><td id="amountfieldname09">&nbsp;</td></tr><tr><td>Blouse</td><td>7.5</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname10" size="4" >
+			             <input type="hidden" name="piecesfieldname10" value="7.5" >
+			             </td><td id="amountfieldname10">&nbsp;</td></tr><tr><td>Dresses,Jump Suit (long, with pleats,Fancy)</td><td>18.5 to 25.5</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname11" size="4" >
+			             <input type="hidden" name="piecesfieldname11" value="22" >
+			             </td><td id="amountfieldname11">&nbsp;</td></tr><tr><td>Dresses (short, with pleats)</td><td>15.5 to 18.5</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname12" size="4" >
+			             <input type="hidden" name="piecesfieldname12" value="17" >
+			             </td><td id="amountfieldname12">&nbsp;</td></tr><tr><td>Skirt</td><td>7.5</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname13" size="4" >
+			             <input type="hidden" name="piecesfieldname13" value="7.5" >
+			             </td><td id="amountfieldname13">&nbsp;</td></tr><tr><td>Jacket,Blazer</td><td>11.5</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname14" size="4" >
+			             <input type="hidden" name="piecesfieldname14" value="11.5" >
+			             </td><td id="amountfieldname14">&nbsp;</td></tr><tr><td>Vest</td><td>6</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname15" size="4" >
+			             <input type="hidden" name="piecesfieldname15" value="6" >
+			             </td><td id="amountfieldname15">&nbsp;</td></tr><tr><td>Bomber Jacket</td><td>12.5</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname16" size="4" >
+			             <input type="hidden" name="piecesfieldname16" value="12.5" >
+			             </td><td id="amountfieldname16">&nbsp;</td></tr><tr><td>Ski Jacket (regular)</td><td>15.5</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname17" size="4" >
+			             <input type="hidden" name="piecesfieldname17" value="15.5" >
+			             </td><td id="amountfieldname17">&nbsp;</td></tr><tr><td>Ski Jacket (down filled)</td><td>22.5</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname18" size="4" >
+			             <input type="hidden" name="piecesfieldname18" value="22.5" >
+			             </td><td id="amountfieldname18">&nbsp;</td></tr><tr><td>Overcoat,Raincoat,Coverall with lining</td><td>25.5</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname19" size="4" >
+			             <input type="hidden" name="piecesfieldname19" value="25.5" >
+			             </td><td id="amountfieldname19">&nbsp;</td></tr><tr><td>Coverall without lining</td><td>15.5</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname20" size="4" >
+			             <input type="hidden" name="piecesfieldname20" value="15.5" >
+			             </td><td id="amountfieldname20">&nbsp;</td></tr><tr><td>Coat</td><td>12.5 to 15.5</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname21" size="4" >
+			             <input type="hidden" name="piecesfieldname21" value="14" >
+			             </td><td id="amountfieldname21">&nbsp;</td></tr><tr><td>Tie</td><td>4.5</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname22" size="4" >
+			             <input type="hidden" name="piecesfieldname22" value="4.5" >
+			             </td><td id="amountfieldname22">&nbsp;</td></tr><tr><td>Blanket</td><td>35 to 45</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname23" size="4" >
+			             <input type="hidden" name="piecesfieldname23" value="40" >
+			             </td><td id="amountfieldname23">&nbsp;</td></tr><tr><td>Comforter (king size)</td><td>35</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname24" size="4" >
+			             <input type="hidden" name="piecesfieldname24" value="35" >
+			             </td><td id="amountfieldname24">&nbsp;</td></tr><tr><td>Comforter (queen or double size)</td><td>25</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname25" size="4" >
+			             <input type="hidden" name="piecesfieldname25" value="25" >
+			             </td><td id="amountfieldname25">&nbsp;</td></tr><tr><td>Duvet (king size)</td><td>45</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname26" size="4" >
+			             <input type="hidden" name="piecesfieldname26" value="45" >
+			             </td><td id="amountfieldname26">&nbsp;</td></tr><tr><td>Duvet (queen or double size)</td><td>35</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname27" size="4" >
+			             <input type="hidden" name="piecesfieldname27" value="35" >
+			             </td><td id="amountfieldname27">&nbsp;</td></tr><tr><td>Duvet Cover,Bed Sheet,Bed Skirt</td><td>20</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname28" size="4" >
+			             <input type="hidden" name="piecesfieldname28" value="20" >
+			             </td><td id="amountfieldname28">&nbsp;</td></tr><tr><td>Pillow Case</td><td>5.5</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname29" size="4" >
+			             <input type="hidden" name="piecesfieldname29" value="5.5" >
+			             </td><td id="amountfieldname29">&nbsp;</td></tr><tr><td>Sleeping Bag</td><td>15 to 25</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname30" size="4" >
+			             <input type="hidden" name="piecesfieldname30" value="20" >
+			             </td><td id="amountfieldname30">&nbsp;</td></tr><tr><td>Table Cloth</td><td>15 to 20</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname31" size="4" >
+			             <input type="hidden" name="piecesfieldname31" value="17.5" >
+			             </td><td id="amountfieldname31">&nbsp;</td></tr><tr><td>Table Runner</td><td>8.5 to 10.5</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname32" size="4" >
+			             <input type="hidden" name="piecesfieldname32" value="9.5" >
+			             </td><td id="amountfieldname32">&nbsp;</td></tr><tr><td>Scarf</td><td>7.5 to 10.5</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname33" size="4" >
+			             <input type="hidden" name="piecesfieldname33" value="9" >
+			             </td><td id="amountfieldname33">&nbsp;</td></tr><tr><td>Hat, Cap</td><td>5.5 to 8.5</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname34" size="4" >
+			             <input type="hidden" name="piecesfieldname34" value="7" >
+			             </td><td id="amountfieldname34">&nbsp;</td></tr><tr><td>Kilt</td><td>25.5</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname35" size="4" >
+			             <input type="hidden" name="piecesfieldname35" value="25.5" >
+			             </td><td id="amountfieldname35">&nbsp;</td></tr><tr><td>Regular Gown</td><td>50</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname36" size="4" >
+			             <input type="hidden" name="piecesfieldname36" value="50" >
+			             </td><td id="amountfieldname36">&nbsp;</td></tr><tr><td>Wedding Gown</td><td>80 to 200</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname37" size="4" >
+			             <input type="hidden" name="piecesfieldname37" value="140" >
+			             </td><td id="amountfieldname37">&nbsp;</td></tr><tr><td>Wedding Gown Box</td><td>50</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname38" size="4" >
+			             <input type="hidden" name="piecesfieldname38" value="50" >
+			             </td><td id="amountfieldname38">&nbsp;</td></tr><tr><td>Sari</td><td>30</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname39" size="4" >
+			             <input type="hidden" name="piecesfieldname39" value="30" >
+			             </td><td id="amountfieldname39">&nbsp;</td></tr><tr><td>Hand Bag No Leather</td><td>25 to 30</td><td>&nbsp;</td><td><input type="text" name="inputPicecsField" id="piecesfieldname40" size="4" >
+			             <input type="hidden" name="piecesfieldname40" value="27.5" >
+			             </td><td id="amountfieldname40">&nbsp;</td></tr><tr><td>Curtains,Drapes by panel (5 pleats) short without lining</td><td>12.5</td><td>per panel</td><td><input type="text" name="inputPicecsField" id="piecesfieldname41" size="4" >
+			             <input type="hidden" name="piecesfieldname41" value="12.5" >
+			             </td><td id="amountfieldname41">&nbsp;</td></tr><tr><td>Curtains,Drapes by panel (5 pleats) long without lining or short with lining</td><td>15.5</td><td>per panel</td><td><input type="text" name="inputPicecsField" id="piecesfieldname42" size="4" >
+			             <input type="hidden" name="piecesfieldname42" value="15.5" >
+			             </td><td id="amountfieldname42">&nbsp;</td></tr><tr><td>Curtains,Drapes by panel (5 pleats) long with lining</td><td>17.5</td><td>per panel</td><td><input type="text" name="inputPicecsField" id="piecesfieldname43" size="4" >
+			             <input type="hidden" name="piecesfieldname43" value="17.5" >
+			             </td><td id="amountfieldname43">&nbsp;</td></tr></table>
+<div id='showtotalamount'>&nbsp;Total Amount:<span id='SummaryOrderAmount'></span></div>
+</div>
+</body>
+</html>

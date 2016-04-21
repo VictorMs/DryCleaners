@@ -1,0 +1,3 @@
+{$LoadWaitingImage|default:''}
+</body>
+</html>
