@@ -21,6 +21,10 @@ class DisplayAboutUsPage extends ShowWebsParentPage {
 		
 	}
 	
+	/**
+	 * (non-PHPdoc)
+	 * @see ShowWebsParentPage::displayNavigate()
+	 */
 	public function displayNavigate() {
 		
 		
